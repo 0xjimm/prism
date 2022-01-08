@@ -6,7 +6,7 @@ risk_free_rate = 0.195
 luna_ust_address = "terra1m6ywlgn6wrjuagcmmezzz2a029gtldhey5k552"
 beth_ust_address = "terra1c0afrdc5253tkp5wt7rxhuj42xwyf2lcre0s7c"
 
-st.set_page_config(layout="wide")
+# st.set_page_config(layout="wide")
 
 
 @st.cache
@@ -218,43 +218,6 @@ with st.sidebar.expander("bETH"):
         help="yETH used for LP farms will receive swap fees and PRISM incentives but not receive staking rewards.",
     )
 
-with st.sidebar.expander("UST"):
-
-    staked_aust = st.number_input(
-        label="Total Deposits",
-        min_value=100.0,
-        step=1_000_000.0,
-        value=5_323_000_000.0,
-        format="%.2d",
-        help="Total amount of UST.",
-    )
-
-    ust_yield = st.slider(
-        label="Earn Yield",
-        min_value=10.0,
-        max_value=30.0,
-        value=19.5,
-        format="%.1f%%",
-    )
-
-    ust_market_share = st.slider(
-        label="UST Market Share",
-        min_value=1,
-        max_value=100,
-        value=10,
-        format="%d%%",
-        help="Percent share of all UST deposits.",
-    )
-
-    yaust_staked = st.slider(
-        label="yaUST Staked",
-        min_value=1,
-        max_value=100,
-        value=90,
-        format="%d%%",
-        help="yaUST used for LP farms will receive swap fees and PRISM incentives but not receive staking rewards.",
-    )
-
 
 st.header("PRISM Protocol Valuation Calculator")
 st.info(
@@ -280,23 +243,14 @@ staked_yeth_revenue = prism_eth_rewards * yeth_staked / 100 * 0.1
 unstaked_yeth_revenue = prism_eth_rewards * (1 - yeth_staked / 100)
 total_yeth_revenue_usd = (staked_yeth_revenue + unstaked_yeth_revenue) * eth_price
 
-# aust calculations
-prism_ust = staked_aust * ust_market_share / 100
-prism_ust_rewards = prism_ust * ust_yield / 100
-staked_yaust_revenue = prism_ust_rewards * yaust_staked / 100 * 0.1
-unstaked_yaust_revenue = prism_ust_rewards * (1 - yaust_staked / 100)
-total_yaust_revenue_usd = staked_yaust_revenue + unstaked_yaust_revenue
-
-total_ytoken_revenue_usd = (
-    total_yluna_revenue_usd + total_yeth_revenue_usd + total_yaust_revenue_usd
-)
+total_ytoken_revenue_usd = total_yluna_revenue_usd + total_yeth_revenue_usd
 
 st.metric(
     label="Total Yield Token Revenue Per Year",
     value=f"${total_ytoken_revenue_usd:,.0f}",
 )
 
-col1, col2, col3 = st.columns(3)
+col1, col2 = st.columns(2)
 
 with col1:
 
@@ -326,20 +280,5 @@ with col2:
         | Staked yETH Revenue | {staked_yeth_revenue:,.0f} |
         | Unstaked yETH Revenue | {unstaked_yeth_revenue:,.0f} |
         | Total yETH Revenue | ${total_yeth_revenue_usd:,.0f} |
-        """
-    )
-
-with col3:
-    st.subheader("UST Breakdown")
-    st.markdown(
-        f"""
-        | Description | Amount |
-        | --- | ---: |
-        | Total Deposits | ${staked_aust:,.0f} |
-        | Prism Market Share | ${prism_ust:,.0f} |
-        | Rewards per year | ${prism_ust_rewards:,.0f} |
-        | Staked yaUST Revenue | ${staked_yaust_revenue:,.0f} |
-        | Unstaked yaUST Revenue | ${unstaked_yaust_revenue:,.0f} |
-        | Total yaUST Revenue | ${total_yaust_revenue_usd:,.0f} |
         """
     )
