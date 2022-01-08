@@ -7,6 +7,8 @@ risk_free_rate = 0.195
 luna_ust_address = "terra1m6ywlgn6wrjuagcmmezzz2a029gtldhey5k552"
 beth_ust_address = "terra1c0afrdc5253tkp5wt7rxhuj42xwyf2lcre0s7c"
 
+st.set_page_config(layout="wide")
+
 
 @st.cache
 def get_price(pair_address):
@@ -267,6 +269,9 @@ with st.sidebar.expander("aUST"):
 
 
 st.header("PRISM Protocol Valuation Calculator")
+st.info(
+    "To support more community tools like this, consider delegating to the [GT Capital Validator](https://station.terra.money/validator/terravaloper1rn9grwtg4p3f30tpzk8w0727ahcazj0f0n3xnk)."
+)
 
 # luna calculations
 prism_luna = staked_luna * luna_market_share / 100
@@ -289,26 +294,39 @@ staked_yaust_revenue = prism_aust_rewards * yaust_staked / 100 * 0.1
 unstaked_yaust_revenue = prism_aust_rewards * (1 - yaust_staked / 100)
 total_yaust_revenue_usd = (staked_yaust_revenue + unstaked_yaust_revenue) * aust_price
 
-st.subheader("LUNA Calculations")
-st.write(f"Total Staked LUNA: {staked_luna:,.0f}")
-st.write(f"LUNA Staked with PRISM: {prism_luna:,.0f}")
-st.write(f"LUNA rewards per year: {prism_luna_rewards:,.0f}")
-st.write(f"Staked yLUNA Revenue: {staked_yluna_revenue:,.0f}")
-st.write(f"Unstaked yLUNA Revenue: {unstaked_yluna_revenue:,.0f}")
-st.write(f"Total yLUNA Revenue: ${total_yluna_revenue_usd:,.0f}")
+total_ytoken_revenue_usd = (
+    total_yluna_revenue_usd + total_yeth_revenue_usd + total_yaust_revenue_usd
+)
 
-st.subheader("ETH Calculations")
-st.write(f"Total Staked ETH: {staked_eth:,.0f}")
-st.write(f"ETH Staked with PRISM: {prism_eth:,.0f}")
-st.write(f"ETH rewards per year: {prism_eth_rewards:,.0f}")
-st.write(f"Staked yETH Revenue: {staked_yeth_revenue:,.0f}")
-st.write(f"Unstaked yETH Revenue: {unstaked_yeth_revenue:,.0f}")
-st.write(f"Total yETH Revenue: ${total_yeth_revenue_usd:,.0f}")
+st.metric(
+    label="Yield Token Revenue Per Year", value=f"${total_ytoken_revenue_usd:,.0f}"
+)
 
-st.subheader("aUST Calculations")
-st.write(f"Total Staked aUST: {staked_aust:,.0f}")
-st.write(f"aUST Staked with PRISM: {prism_aust:,.0f}")
-st.write(f"aUST rewards per year: {prism_aust_rewards:,.0f}")
-st.write(f"Staked aUST Revenue: {staked_yaust_revenue:,.0f}")
-st.write(f"Unstaked yaUST Revenue: {unstaked_yaust_revenue:,.0f}")
-st.write(f"Total yaUST Revenue: ${total_yaust_revenue_usd:,.0f}")
+col1, col2, col3 = st.columns(3)
+
+with col1:
+    st.subheader("LUNA Breakdown")
+    st.write(f"Total Staked LUNA: {staked_luna:,.0f}")
+    st.write(f"LUNA Staked with PRISM: {prism_luna:,.0f}")
+    st.write(f"LUNA rewards per year: {prism_luna_rewards:,.0f}")
+    st.write(f"Staked yLUNA Revenue: {staked_yluna_revenue:,.0f}")
+    st.write(f"Unstaked yLUNA Revenue: {unstaked_yluna_revenue:,.0f}")
+    st.write(f"Total yLUNA Revenue: ${total_yluna_revenue_usd:,.0f}")
+
+with col2:
+    st.subheader("ETH Breakdown")
+    st.write(f"Total Staked ETH: {staked_eth:,.0f}")
+    st.write(f"ETH Staked with PRISM: {prism_eth:,.0f}")
+    st.write(f"ETH rewards per year: {prism_eth_rewards:,.0f}")
+    st.write(f"Staked yETH Revenue: {staked_yeth_revenue:,.0f}")
+    st.write(f"Unstaked yETH Revenue: {unstaked_yeth_revenue:,.0f}")
+    st.write(f"Total yETH Revenue: ${total_yeth_revenue_usd:,.0f}")
+
+with col3:
+    st.subheader("aUST Breakdown")
+    st.write(f"Total Staked aUST: {staked_aust:,.0f}")
+    st.write(f"aUST Staked with PRISM: {prism_aust:,.0f}")
+    st.write(f"aUST rewards per year: {prism_aust_rewards:,.0f}")
+    st.write(f"Staked aUST Revenue: {staked_yaust_revenue:,.0f}")
+    st.write(f"Unstaked yaUST Revenue: {unstaked_yaust_revenue:,.0f}")
+    st.write(f"Total yaUST Revenue: ${total_yaust_revenue_usd:,.0f}")
