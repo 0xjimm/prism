@@ -262,11 +262,16 @@ st.info(
 )
 
 # luna calculations
+df_luna = pd.DataFrame()
 prism_luna = staked_luna * luna_market_share / 100
 prism_luna_rewards = prism_luna * luna_yield / 100
 staked_yluna_revenue = prism_luna_rewards * yluna_staked / 100 * 0.1
 unstaked_yluna_revenue = prism_luna_rewards * (1 - yluna_staked / 100)
 total_yluna_revenue_usd = (staked_yluna_revenue + unstaked_yluna_revenue) * luna_price
+
+df_luna["Total Staked"] = staked_luna
+df_luna["LUNA Staked with PRISM"] = prism_luna
+
 
 # eth calculations
 prism_eth = staked_eth * eth_market_share / 100
@@ -276,10 +281,10 @@ unstaked_yeth_revenue = prism_eth_rewards * (1 - yeth_staked / 100)
 total_yeth_revenue_usd = (staked_yeth_revenue + unstaked_yeth_revenue) * eth_price
 
 # aust calculations
-prism_aust = staked_aust * ust_market_share / 100
-prism_aust_rewards = prism_aust * ust_yield / 100
-staked_yaust_revenue = prism_aust_rewards * yaust_staked / 100 * 0.1
-unstaked_yaust_revenue = prism_aust_rewards * (1 - yaust_staked / 100)
+prism_ust = staked_aust * ust_market_share / 100
+prism_ust_rewards = prism_ust * ust_yield / 100
+staked_yaust_revenue = prism_ust_rewards * yaust_staked / 100 * 0.1
+unstaked_yaust_revenue = prism_ust_rewards * (1 - yaust_staked / 100)
 total_yaust_revenue_usd = staked_yaust_revenue + unstaked_yaust_revenue
 
 total_ytoken_revenue_usd = (
@@ -287,34 +292,54 @@ total_ytoken_revenue_usd = (
 )
 
 st.metric(
-    label="Yield Token Revenue Per Year", value=f"${total_ytoken_revenue_usd:,.0f}"
+    label="Total Yield Token Revenue Per Year",
+    value=f"${total_ytoken_revenue_usd:,.0f}",
 )
 
 col1, col2, col3 = st.columns(3)
 
 with col1:
+
     st.subheader("LUNA Breakdown")
-    st.write(f"Total Staked LUNA: {staked_luna:,.0f}")
-    st.write(f"LUNA Staked with PRISM: {prism_luna:,.0f}")
-    st.write(f"LUNA rewards per year: {prism_luna_rewards:,.0f}")
-    st.write(f"Staked yLUNA Revenue: {staked_yluna_revenue:,.0f}")
-    st.write(f"Unstaked yLUNA Revenue: {unstaked_yluna_revenue:,.0f}")
-    st.write(f"Total yLUNA Revenue: ${total_yluna_revenue_usd:,.0f}")
+    st.markdown(
+        f"""
+        | Description | Amount |
+        | --- | ---: |
+        | Total Staked | {staked_luna:,.0f} |
+        | Prism Market Share | {prism_luna:,.0f} |
+        | Rewards per year | {prism_luna_rewards:,.0f} |
+        | Staked yLUNA Revenue | {staked_yluna_revenue:,.0f} |
+        | Unstaked yLUNA Revenue | {unstaked_yluna_revenue:,.0f} |
+        | Total yLUNA Revenue | ${total_yluna_revenue_usd:,.0f} |
+        """
+    )
 
 with col2:
     st.subheader("ETH Breakdown")
-    st.write(f"Total Staked ETH: {staked_eth:,.0f}")
-    st.write(f"ETH Staked with PRISM: {prism_eth:,.0f}")
-    st.write(f"ETH rewards per year: {prism_eth_rewards:,.0f}")
-    st.write(f"Staked yETH Revenue: {staked_yeth_revenue:,.0f}")
-    st.write(f"Unstaked yETH Revenue: {unstaked_yeth_revenue:,.0f}")
-    st.write(f"Total yETH Revenue: ${total_yeth_revenue_usd:,.0f}")
+    st.markdown(
+        f"""
+        | Description | Amount |
+        | --- | ---: |
+        | Total Staked | {staked_eth:,.0f} |
+        | Prism Market Share | {prism_eth:,.0f} |
+        | Rewards per year | {prism_eth_rewards:,.0f} |
+        | Staked yETH Revenue | {staked_yeth_revenue:,.0f} |
+        | Unstaked yETH Revenue | {unstaked_yeth_revenue:,.0f} |
+        | Total yETH Revenue | ${total_yeth_revenue_usd:,.0f} |
+        """
+    )
 
 with col3:
     st.subheader("UST Breakdown")
-    st.write(f"Total Deposit UST: {staked_aust:,.0f}")
-    st.write(f"aUST Staked with PRISM: {prism_aust:,.0f}")
-    st.write(f"aUST rewards per year: {prism_aust_rewards:,.0f}")
-    st.write(f"Staked yaUST Revenue: {staked_yaust_revenue:,.0f}")
-    st.write(f"Unstaked yaUST Revenue: {unstaked_yaust_revenue:,.0f}")
-    st.write(f"Total yaUST Revenue: ${total_yaust_revenue_usd:,.0f}")
+    st.markdown(
+        f"""
+        | Description | Amount |
+        | --- | ---: |
+        | Total Deposits | ${staked_aust:,.0f} |
+        | Prism Market Share | ${prism_ust:,.0f} |
+        | Rewards per year | ${prism_ust_rewards:,.0f} |
+        | Staked yaUST Revenue | ${staked_yaust_revenue:,.0f} |
+        | Unstaked yaUST Revenue | ${unstaked_yaust_revenue:,.0f} |
+        | Total yaUST Revenue | ${total_yaust_revenue_usd:,.0f} |
+        """
+    )
