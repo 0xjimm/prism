@@ -256,7 +256,7 @@ with st.sidebar.expander("Liquidity Providers"):
         help="yLP used for LP farms will receive swap fees and PRISM incentives but not receive staking rewards.",
     )
 
-st.header("PRISM Protocol Valuation Calculator")
+st.markdown("# PRISM Protocol Valuation Calculator")
 st.markdown(
     """
     This calculator builds on [@LunaEvangelist's](https://twitter.com/lunaisfreedom) article on [Medium](https://medium.com/@LunaEvangelist/prism-whats-it-worth-eee965644fa8) regarding the valuation of the PRISM token.
@@ -294,18 +294,13 @@ total_ytoken_revenue_usd = (
     total_yluna_revenue_usd + total_yeth_revenue_usd + total_ylp_revenue_usd
 )
 
-st.write("")
-
-st.metric(
-    label="Total Yield Token Revenue Per Year",
-    value=f"${total_ytoken_revenue_usd:,.0f}",
-)
+st.markdown("## Profit Centers")
 
 col1, col2, col3 = st.columns(3)
 
 with col1:
 
-    st.subheader("LUNA Breakdown")
+    st.subheader("LUNA Vault")
     st.markdown(
         f"""
         | Description | Amount |
@@ -320,7 +315,7 @@ with col1:
     )
 
 with col2:
-    st.subheader("ETH Breakdown")
+    st.subheader("ETH Vault")
     st.markdown(
         f"""
         | Description | Amount |
@@ -335,7 +330,7 @@ with col2:
     )
 
 with col3:
-    st.subheader("yLP Breakdown")
+    st.subheader("yLP Vaults")
     st.markdown(
         f"""
         | Description | Amount |
@@ -349,7 +344,26 @@ with col3:
         """
     )
 
-st.write("")
+st.markdown("<br>", unsafe_allow_html=True)
+
+st.metric(
+    label="Total Revenue Per Year",
+    value=f"${total_ytoken_revenue_usd:,.0f}",
+)
+
+st.markdown(
+    """
+
+## Future Profit Centers
+- AMM Fees
+- Limit order fees
+- Lido bAssets: ySOL, yDOT, etc.
+- IBC PoS Assets: ySCRT, yJUNO, yOSMO, etc.
+- Fixed maturities: p/yaUST-24m, etc.
+"""
+)
+
+st.markdown("")
 
 # disclaimer
 st.warning("This tool was created for educational purposes only, not financial advice.")
