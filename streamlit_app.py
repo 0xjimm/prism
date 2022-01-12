@@ -6,7 +6,7 @@ risk_free_rate = 0.195
 luna_ust_address = "terra1m6ywlgn6wrjuagcmmezzz2a029gtldhey5k552"
 beth_ust_address = "terra1c0afrdc5253tkp5wt7rxhuj42xwyf2lcre0s7c"
 
-# st.set_page_config(layout="wide")
+st.set_page_config(layout="wide")
 
 
 @st.cache
@@ -218,23 +218,62 @@ with st.sidebar.expander("bETH"):
         help="yETH used for LP farms will receive swap fees and PRISM incentives but not receive staking rewards.",
     )
 
+with st.sidebar.expander("Liquidity Providers"):
+
+    total_lp = st.number_input(
+        label="Total Volume Per Day (Millions)",
+        min_value=1.0,
+        step=1.0,
+        value=100.0,
+        format="%.2d",
+        help="Total volume of all swaps on Terra.",
+    )
+
+    lp_yield = st.slider(
+        label="Average LP Yield",
+        min_value=1.0,
+        max_value=100.0,
+        value=50.0,
+        format="%.1f%%",
+        help="Includes swap fees and LP incentives.",
+    )
+
+    lp_market_share = st.slider(
+        label="LP Market Share",
+        min_value=0,
+        max_value=10,
+        value=1,
+        format="%d%%",
+        help="Percent share of all swaps on Terra.",
+    )
+
+    ylp_staked = st.slider(
+        label="yLP Staked",
+        min_value=1,
+        max_value=100,
+        value=90,
+        format="%d%%",
+        help="yLP used for LP farms will receive swap fees and PRISM incentives but not receive staking rewards.",
+    )
 
 st.header("PRISM Protocol Valuation Calculator")
+st.markdown(
+    """
+    This calculator builds on [@LunaEvangelist's](https://twitter.com/lunaisfreedom) article on [Medium](https://medium.com/@LunaEvangelist/prism-whats-it-worth-eee965644fa8) regarding the valuation of the PRISM token.
+    
+    Open the menu on the left to change your assumptions.
+    """
+)
 st.info(
     "To support more community tools like this, consider delegating to the [GT Capital Validator](https://station.terra.money/validator/terravaloper1rn9grwtg4p3f30tpzk8w0727ahcazj0f0n3xnk)."
 )
 
 # luna calculations
-df_luna = pd.DataFrame()
 prism_luna = staked_luna * luna_market_share / 100
 prism_luna_rewards = prism_luna * luna_yield / 100
 staked_yluna_revenue = prism_luna_rewards * yluna_staked / 100 * 0.1
 unstaked_yluna_revenue = prism_luna_rewards * (1 - yluna_staked / 100)
 total_yluna_revenue_usd = (staked_yluna_revenue + unstaked_yluna_revenue) * luna_price
-
-df_luna["Total Staked"] = staked_luna
-df_luna["LUNA Staked with PRISM"] = prism_luna
-
 
 # eth calculations
 prism_eth = staked_eth * eth_market_share / 100
@@ -243,14 +282,26 @@ staked_yeth_revenue = prism_eth_rewards * yeth_staked / 100 * 0.1
 unstaked_yeth_revenue = prism_eth_rewards * (1 - yeth_staked / 100)
 total_yeth_revenue_usd = (staked_yeth_revenue + unstaked_yeth_revenue) * eth_price
 
-total_ytoken_revenue_usd = total_yluna_revenue_usd + total_yeth_revenue_usd
+# lp calculations
+prism_lp = total_lp * lp_market_share * 1_000_000 / 100 * 365
+prism_lp_rewards = prism_lp * lp_yield / 100
+staked_ylp_revenue = prism_lp_rewards * lp_yield / 100 * 0.15
+unstaked_ylp_revenue = prism_lp_rewards * (1 - ylp_staked / 100)
+total_ylp_revenue_usd = staked_ylp_revenue + unstaked_ylp_revenue
+
+# total revenues
+total_ytoken_revenue_usd = (
+    total_yluna_revenue_usd + total_yeth_revenue_usd + total_ylp_revenue_usd
+)
+
+st.write("")
 
 st.metric(
     label="Total Yield Token Revenue Per Year",
     value=f"${total_ytoken_revenue_usd:,.0f}",
 )
 
-col1, col2 = st.columns(2)
+col1, col2, col3 = st.columns(3)
 
 with col1:
 
@@ -282,3 +333,23 @@ with col2:
         | Total yETH Revenue | ${total_yeth_revenue_usd:,.0f} |
         """
     )
+
+with col3:
+    st.subheader("yLP Breakdown")
+    st.markdown(
+        f"""
+        | Description | Amount |
+        | --- | ---: |
+        | Yearly LP Volume | ${total_lp * 1_000_000 * 365:,.0f} |
+        | Prism Market Share | ${prism_lp:,.0f} |
+        | Rewards per year | ${prism_lp_rewards:,.0f} |
+        | Staked yLP Revenue | {staked_ylp_revenue:,.0f} |
+        | Unstaked yLP Revenue | {unstaked_ylp_revenue:,.0f} |
+        | Total yLP Revenue | ${total_ylp_revenue_usd:,.0f} |
+        """
+    )
+
+st.write("")
+
+# disclaimer
+st.warning("This tool was created for educational purposes only, not financial advice.")
