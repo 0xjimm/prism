@@ -367,14 +367,18 @@ col5.metric(
 )
 
 col6.metric(
-    label="Revenue Per TVL",
+    label="Revenue Per Total Value Locked",
     value=f"{earn_tvl*100:,.2f}%",
+)
+
+st.info(
+    "You can compare protocol revenue and total value locked at https://www.theblockcrypto.com"
 )
 
 st.markdown(
     """
 
-## Future Profit Centers
+## Other Profit Centers
 - AMM Fees
 - Limit order fees
 - Lido bAssets: ySOL, yDOT, etc.
