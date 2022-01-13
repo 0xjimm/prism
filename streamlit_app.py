@@ -127,6 +127,30 @@ eth_price = get_price(beth_ust_address)
 st.sidebar.header("Assumptions")
 st.sidebar.write("Exand the following sections to change your assumptions.")
 
+with st.sidebar.expander("PRISM", expanded=True):
+
+    prism_price = st.number_input(
+        label="PRISM Price", min_value=0.0, step=0.1, value=1.0, format="%.2f"
+    )
+
+    circulating_supply = st.number_input(
+        label="Circulating Supply (Millions)",
+        min_value=70,
+        max_value=1_000,
+        value=70,
+        help="First year circulating supply of 333m tokens.  Max of 1b tokens.",
+    )
+
+    percent_prism_staked = st.slider(
+        label="PRISM Staked",
+        min_value=0.0,
+        max_value=100.0,
+        value=75.0,
+        help="Amount of circulating PRISM that is staked.",
+        format="%.0f%%",
+    )
+
+
 with st.sidebar.expander("LUNA", expanded=True):
 
     staked_luna = st.number_input(
@@ -242,7 +266,7 @@ with st.sidebar.expander("Liquidity Providers"):
         label="LP Market Share",
         min_value=0.0,
         max_value=10.0,
-        value=1.0,
+        value=5.0,
         step=0.1,
         format="%.1f%%",
         help="Percent share of all swaps on Terra.",
@@ -371,6 +395,30 @@ col6.metric(
     label="Revenue Per Total Value Locked",
     value=f"{earn_tvl*100:,.2f}%",
 )
+
+# xprism revenue per token
+xprism_revenue_per_token = (
+    total_ytoken_revenue_usd
+    / (circulating_supply * 1_000_000)
+    / (percent_prism_staked / 100)
+)
+
+# xprism apr
+xprism_apr = xprism_revenue_per_token / prism_price * 100
+
+col7, col8, col9 = st.columns(3)
+
+col7.metric(
+    label="PRISM Circulating Supply",
+    value=f"{circulating_supply * 1_000_000:,.0f}",
+)
+
+col8.metric(
+    label="xPRISM Annual Revenue",
+    value=f"${xprism_revenue_per_token:,.2f}",
+)
+
+col9.metric(label="xPRISM APR", value=f"{xprism_apr:.2f}%")
 
 st.info(
     "You can compare protocol revenue and total value locked at https://www.theblockcrypto.com"
