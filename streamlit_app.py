@@ -221,16 +221,16 @@ with st.sidebar.expander("bETH"):
 with st.sidebar.expander("Liquidity Providers"):
 
     total_lp = st.number_input(
-        label="Total Volume Per Day (Millions)",
-        min_value=1.0,
-        step=1.0,
-        value=100.0,
-        format="%.2d",
+        label="Total Liquidity on Terra (Billions)",
+        min_value=0.5,
+        step=0.1,
+        value=2.0,
+        format="%.1f",
         help="Total volume of all swaps on Terra.",
     )
 
     lp_yield = st.slider(
-        label="Average LP Yield",
+        label="Average LP APR",
         min_value=1.0,
         max_value=100.0,
         value=50.0,
@@ -240,10 +240,11 @@ with st.sidebar.expander("Liquidity Providers"):
 
     lp_market_share = st.slider(
         label="LP Market Share",
-        min_value=0,
-        max_value=10,
-        value=1,
-        format="%d%%",
+        min_value=0.0,
+        max_value=10.0,
+        value=1.0,
+        step=0.1,
+        format="%.1f%%",
         help="Percent share of all swaps on Terra.",
     )
 
@@ -283,7 +284,7 @@ unstaked_yeth_revenue = prism_eth_rewards * (1 - yeth_staked / 100)
 total_yeth_revenue_usd = (staked_yeth_revenue + unstaked_yeth_revenue) * eth_price
 
 # lp calculations
-prism_lp = total_lp * lp_market_share * 1_000_000 / 100 * 365
+prism_lp = total_lp * lp_market_share * 1_000_000_000 / 100
 prism_lp_rewards = prism_lp * lp_yield / 100
 staked_ylp_revenue = prism_lp_rewards * lp_yield / 100 * 0.15
 unstaked_ylp_revenue = prism_lp_rewards * (1 - ylp_staked / 100)
@@ -330,11 +331,11 @@ with col3:
         f"""
         | Description | Amount |
         | --- | ---: |
-        | Yearly LP Volume | ${total_lp * 1_000_000 * 365:,.0f} |
+        | Total Liquidity | ${total_lp * 1_000_000_000:,.0f} |
         | Prism Market Share | ${prism_lp:,.0f} |
         | Rewards per year | ${prism_lp_rewards:,.0f} |
-        | Staked yLP Revenue | {staked_ylp_revenue:,.0f} |
-        | Unstaked yLP Revenue | {unstaked_ylp_revenue:,.0f} |
+        | Staked yLP Revenue | ${staked_ylp_revenue:,.0f} |
+        | Unstaked yLP Revenue | ${unstaked_ylp_revenue:,.0f} |
         | Total yLP Revenue | ${total_ylp_revenue_usd:,.0f} |
         """
     )
