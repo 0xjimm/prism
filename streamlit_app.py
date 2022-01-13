@@ -289,11 +289,6 @@ staked_ylp_revenue = prism_lp_rewards * lp_yield / 100 * 0.15
 unstaked_ylp_revenue = prism_lp_rewards * (1 - ylp_staked / 100)
 total_ylp_revenue_usd = staked_ylp_revenue + unstaked_ylp_revenue
 
-# total revenues
-total_ytoken_revenue_usd = (
-    total_yluna_revenue_usd + total_yeth_revenue_usd + total_ylp_revenue_usd
-)
-
 st.markdown("## Profit Centers")
 
 col1, col2, col3 = st.columns(3)
@@ -346,9 +341,34 @@ with col3:
 
 st.markdown("<br>", unsafe_allow_html=True)
 
-st.metric(
+# metrics
+
+# total revenues
+total_ytoken_revenue_usd = (
+    total_yluna_revenue_usd + total_yeth_revenue_usd + total_ylp_revenue_usd
+)
+
+# total value locked
+tvl = lp_market_share + (luna_price * prism_luna) + (eth_price * prism_eth)
+
+# earnings per tvl
+earn_tvl = total_ytoken_revenue_usd / tvl
+
+col4, col5, col6 = st.columns(3)
+
+col4.metric(
+    label="Total Value Locked",
+    value=f"${tvl:,.0f}",
+)
+
+col5.metric(
     label="Total Revenue Per Year",
     value=f"${total_ytoken_revenue_usd:,.0f}",
+)
+
+col6.metric(
+    label="Revenue Per TVL",
+    value=f"{earn_tvl*100:,.2f}%",
 )
 
 st.markdown(
