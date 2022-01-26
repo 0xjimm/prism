@@ -374,7 +374,7 @@ total_ytoken_revenue_usd = (
 )
 
 # total value locked
-tvl = lp_market_share + (luna_price * prism_luna) + (eth_price * prism_eth)
+tvl = prism_lp + (luna_price * prism_luna) + (eth_price * prism_eth)
 
 # earnings per tvl
 earn_tvl = total_ytoken_revenue_usd / tvl
