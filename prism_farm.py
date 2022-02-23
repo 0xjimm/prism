@@ -176,7 +176,7 @@ boost_rewards = total_rewards * (1 - ratio)
 
 st.subheader("PRISM Farm Allocation")
 st.markdown(
-    "130m $PRISM allocated to the PRISM Farm over the course of 12 months.  26m $PRISM is allocated to particpants who have earned AMPS."
+    "130m \$PRISM allocated to the PRISM Farm over the course of 12 months.  26m $PRISM is allocated to particpants who have earned AMPS."
 )
 
 col1, col2 = st.columns(2)
