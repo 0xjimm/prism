@@ -159,12 +159,11 @@ staking_yield = get_staking_yield(luna_price_input, staked_luna) * 100
 yluna_yield = (luna_price_input / yluna_price) * staking_yield
 
 st.markdown("# PRISM Farm Calculator")
+st.info("Mobile users, click the arrow on the upper left to change your assumptions.")
 st.markdown(
     """
     This calculator is designed to help you better understand how much $PRISM you can earn from staking your yLUNA and pledging your xPRISM to earn AMPS.
     
-    Remember, if you unpledge any amount of xPRISM, your AMPS earnings will be reset.
-
     **In general, the more yLUNA you stake, the more xPRISM you pledge, and the longer you pledge, the more $PRISM you earn.**
     """
 )
@@ -214,6 +213,8 @@ user_xprism = col4.number_input(
 user_amps_duration = col5.number_input(
     "Pledge Duration (Days)", min_value=0, value=30, step=1, max_value=200
 )
+
+st.error("Unpledging any amount of xPRISM will reset all AMPS earned to zero.")
 
 
 st.subheader("AMPS Vault")
