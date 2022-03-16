@@ -326,10 +326,6 @@ df["rewards_sum"] = df["daily_rewards_usd"].cumsum()
 st.subheader("Projected APRs")
 st.write("User's projected APR over the next 60 days, given all else equal.")
 
-col9, col10, col11 = st.columns(3)
-
-col9.metric("T")
-
 chart = px.line(
     data_frame=df,
     x="days",
