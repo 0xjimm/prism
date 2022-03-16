@@ -325,6 +325,11 @@ df["rewards_sum"] = df["daily_rewards_usd"].cumsum()
 # plot APRs
 st.subheader("Projected APRs")
 st.write("User's projected APR over the next 60 days, given all else equal.")
+
+col9, col10, col11 = st.columns(3)
+
+col9.metric("T")
+
 chart = px.line(
     data_frame=df,
     x="days",
@@ -337,7 +342,7 @@ chart = px.line(
 st.plotly_chart(chart, use_container_width=True)
 
 st.subheader("Projected Rewards")
-st.write("User's cumulative rewards over the next 60 days, given all else equal.")
+st.write("User's daily rewards over the next 60 days, given all else equal.")
 
 chart = px.line(
     data_frame=df,
