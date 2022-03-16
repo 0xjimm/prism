@@ -182,7 +182,7 @@ user_address = st.sidebar.text_input(
 
 
 # asset prices
-with st.sidebar.expander("Asset Prices", expanded=True):
+with st.sidebar.expander("Asset Prices", expanded=False):
 
     luna_price_input = st.number_input(
         "Luna",
