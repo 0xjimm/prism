@@ -349,3 +349,5 @@ chart = px.line(
 )
 
 st.plotly_chart(chart, use_container_width=True)
+
+st.info("This tool was created for educational purposes only, not financial advice.")
