@@ -182,7 +182,7 @@ user_address = st.sidebar.text_input(
 
 
 # asset prices
-with st.sidebar.expander("Asset Prices", expanded=False):
+with st.sidebar.expander("Asset Prices", expanded=True):
 
     luna_price_input = st.number_input(
         "Luna",
@@ -272,82 +272,112 @@ col6.metric(label="Base APR", value=f"{base_apr:,.2f}%")
 col7.metric(label="Boost APR", value=f"{boost_apr:,.2f}%")
 col8.metric(label="Total APR", value=f"{total_apr:,.2f}%")
 
-# user's new position
-st.sidebar.subheader("User's New Position")
+# range of yluna values
+yluna_range = range(int(user_yluna * 0.1), int(user_yluna * 5), int(user_yluna * 0.05))
 
-new_user_yluna = st.sidebar.number_input(
-    "yLUNA Staked",
-    min_value=0.0,
-    value=user_yluna,
-    step=user_yluna * 0.01,
-    format="%.0f",
+# range of xprism values
+xprism_range = range(
+    int(user_xprism * 0.1), int(user_xprism * 5), int(user_xprism * 0.05)
 )
 
-new_user_xprism = st.sidebar.number_input(
-    "xPRISM Pledged",
-    min_value=0.0,
-    value=user_xprism,
-    step=user_xprism * 0.01,
-    format="%.0f",
-)
+# new records after 1 day
+records = []
+for new_user_yluna in yluna_range:
+    for new_user_xprism in xprism_range:
 
-# reset user amps if they decrease
-if new_user_xprism < user_xprism:
-    user_amps = 0
-    st.sidebar.warning("Reducing xPRISM pledged will reset your accrued AMPS.")
+        new_yluna_staked = yluna_staked + new_user_yluna - user_yluna
 
-new_yluna_staked = yluna_staked + new_user_yluna - user_yluna
+        new_user_amps = 0.49992 * new_user_xprism + user_amps
+        new_user_weight = (new_user_yluna * new_user_amps) ** (1 / 2)
 
-# projected rewards over x days
-df = pd.DataFrame(range(1, 61), columns=["days"])
+        new_total_amps = 0.49992 * (xprism_pledged + new_user_xprism) + total_amps
+        new_total_weight = (new_yluna_staked * new_total_amps) ** (1 / 2)
 
-# calculate APRs over time
-df["new_user_amps"] = new_user_xprism * 0.49992 * df["days"] + user_amps
-df["new_user_weight"] = (new_user_yluna * df["new_user_amps"]) ** (1 / 2)
-df["new_total_amps"] = (xprism_pledged + new_user_xprism) * 0.49992 * df[
-    "days"
-] + total_amps
-df["new_total_weight"] = (new_yluna_staked * df["new_total_amps"]) ** (1 / 2)
+        new_base_rewards = 104_000_000 * new_user_yluna / new_yluna_staked
+        new_base_apr = (
+            (new_base_rewards * prism_price) / (new_user_yluna * yluna_price) * 100
+        )
 
-df["new_base_rewards"] = 104_000_000 * new_user_yluna / yluna_staked
-df["new_base_apr"] = (
-    df["new_base_rewards"] * prism_price / (new_user_yluna * yluna_price) * 100
-)
-df["new_boost_rewards"] = 26_000_000 * df["new_user_weight"] / df["new_total_weight"]
-df["new_boost_apr"] = (
-    df["new_boost_rewards"] * prism_price / (new_user_yluna * yluna_price)
-) * 100
-df["new_total_apr"] = df["new_base_apr"] + df["new_boost_apr"]
-df["daily_rewards"] = (df["new_base_rewards"] + df["new_boost_rewards"]) / 365
-df["daily_rewards_usd"] = df["daily_rewards"] * prism_price
-df["rewards_sum"] = df["daily_rewards_usd"].cumsum()
+        new_boost_rewards = 26_000_000 * new_user_weight / new_total_weight
+        new_boost_apr = (
+            (new_boost_rewards * prism_price) / (new_user_yluna * yluna_price) * 100
+        )
+
+        new_total_apr = new_base_apr + new_boost_apr
+        new_total_rewards = (new_base_rewards + new_boost_rewards) / 365
+
+        ratio = new_user_xprism / new_user_yluna
+
+        # append all the data to the records list
+        records.append(
+            {
+                "new_user_yluna": new_user_yluna,
+                "new_user_xprism": new_user_xprism,
+                "new_yluna_staked": new_yluna_staked,
+                "new_user_amps": new_user_amps,
+                "new_user_weight": new_user_weight,
+                "new_total_amps": new_total_amps,
+                "new_total_weight": new_total_weight,
+                "new_base_rewards": new_base_rewards,
+                "new_base_apr": new_base_apr,
+                "new_boost_rewards": new_boost_rewards,
+                "new_boost_apr": new_boost_apr,
+                "new_total_apr": new_total_apr,
+                "new_total_rewards": new_total_rewards,
+                "ratio": ratio,
+            }
+        )
+
+df = pd.DataFrame(records)
 
 # plot APRs
-st.subheader("Projected APRs")
-st.write("User's projected APR over the next 60 days, given all else equal.")
+st.subheader("Projected Rewards")
+st.write("User's daily PRISM rewards based on various yLUNA and xPRISM scenarios.")
 
-chart = px.line(
+chart = px.scatter_3d(
     data_frame=df,
-    x="days",
-    y=["new_base_apr", "new_boost_apr", "new_total_apr"],
-    labels={"days": "Days", "value": "APR %", "variable": "Legend"},
+    x="new_user_yluna",
+    y="new_user_xprism",
+    z="ratio",
+    color="new_total_rewards",
+    range_z=[0, 200],
+    labels={
+        "ratio": "Ratio",
+        "new_user_yluna": "yLUNA Amount",
+        "new_user_xprism": "xPRISM Amount",
+        "new_total_rewards": "Daily Rewards",
+    },
     template="plotly_dark",
 )
 
 # show chart
 st.plotly_chart(chart, use_container_width=True)
 
-st.subheader("Projected Rewards")
-st.write("User's daily rewards over the next 60 days, given all else equal.")
 
-chart = px.line(
+# plot APRs
+st.subheader("Projected APRs")
+st.write("User's projected APR based on various yLUNA and xPRISM scenarios.")
+
+chart = px.scatter_3d(
     data_frame=df,
-    x="days",
-    y=["daily_rewards_usd"],
-    labels={"days": "Days", "value": "Rewards (USD)", "variable": "Legend"},
+    x="new_user_yluna",
+    y="new_user_xprism",
+    z="ratio",
+    color="new_total_apr",
+    range_z=[0, 200],
+    labels={
+        "ratio": "Ratio",
+        "new_user_yluna": "yLUNA Amount",
+        "new_user_xprism": "xPRISM Amount",
+        "new_total_apr": "APR",
+    },
     template="plotly_dark",
 )
 
+
+# show chart
 st.plotly_chart(chart, use_container_width=True)
 
+
+# disclaimer
 st.info("This tool was created for educational purposes only, not financial advice.")
