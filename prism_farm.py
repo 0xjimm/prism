@@ -3,6 +3,7 @@ import json
 import requests
 import streamlit as st
 import pandas as pd
+import numpy as np
 import plotly.express as px
 import plotly.graph_objects as go
 
@@ -284,14 +285,16 @@ col7.metric(label="Boost APR", value=f"{boost_apr:,.2f}%")
 col8.metric(label="Total APR", value=f"{total_apr:,.2f}%")
 
 # range of yluna values + original yluna value
-yluna_range = list(
-    range(int(user_yluna * 0.5), int(user_yluna * 5), int(user_yluna * 0.05))
-) + [user_yluna]
+yluna_range = np.arange(user_yluna * 0.5, user_yluna * 5, user_yluna * 0.05).tolist()
 
 # range of xprism values + original xprism value
-xprism_range = list(
-    range(int(user_xprism * 0.5), int(user_xprism * 10), int(user_xprism * 0.05))
-) + [user_xprism]
+xprism_range = np.arange(
+    user_xprism * 0.5, user_xprism * 10, user_xprism * 0.05
+).tolist()
+
+# append current position to ranges
+yluna_range.append(user_yluna)
+xprism_range.append(user_xprism)
 
 # new records after 1 day
 records = []
