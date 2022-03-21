@@ -1,12 +1,9 @@
 import base64
 import json
-from turtle import position
-import numpy as np
 import requests
 import streamlit as st
 import pandas as pd
 import plotly.express as px
-import plotly.graph_objects as go
 
 
 @st.cache(show_spinner=False)
