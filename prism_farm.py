@@ -4,6 +4,7 @@ import requests
 import streamlit as st
 import pandas as pd
 import plotly.express as px
+import plotly.graph_objects as go
 
 
 @st.cache(show_spinner=False)
@@ -251,8 +252,15 @@ yluna_staked = get_yluna_staked()
 total_amps = total_boost_weight**2 / yluna_staked
 
 # user queries
-user_xprism, user_amps = get_user_amps(user_address)
-user_yluna, user_weight = get_user_prism_farm(user_address)
+try:
+    user_xprism, user_amps = get_user_amps(user_address)
+    user_yluna, user_weight = get_user_prism_farm(user_address)
+except:
+    st.warning(
+        "Please enter a wallet address that is particpating in the PRISM Farm and AMPS Vault."
+    )
+    st.stop()
+
 current_position_size = (user_yluna * yluna_price) + (user_xprism * xprism_price)
 
 col3, col4, col5 = st.columns(3)
@@ -275,13 +283,15 @@ col6.metric(label="Base APR", value=f"{base_apr:,.2f}%")
 col7.metric(label="Boost APR", value=f"{boost_apr:,.2f}%")
 col8.metric(label="Total APR", value=f"{total_apr:,.2f}%")
 
-# range of yluna values
-yluna_range = range(int(user_yluna * 0.5), int(user_yluna * 5), int(user_yluna * 0.05))
+# range of yluna values + original yluna value
+yluna_range = list(
+    range(int(user_yluna * 0.5), int(user_yluna * 5), int(user_yluna * 0.05))
+) + [user_yluna]
 
-# range of xprism values
-xprism_range = range(
-    int(user_xprism * 0.5), int(user_xprism * 10), int(user_xprism * 0.05)
-)
+# range of xprism values + original xprism value
+xprism_range = list(
+    range(int(user_xprism * 0.5), int(user_xprism * 10), int(user_xprism * 0.05))
+) + [user_xprism]
 
 # new records after 1 day
 records = []
@@ -292,7 +302,12 @@ for new_user_yluna in yluna_range:
 
         new_yluna_staked = yluna_staked + new_user_yluna - user_yluna
 
-        new_user_amps = (1 * 0.49992) * new_user_xprism + user_amps
+        # reset AMPS if xprism is unpledged
+        if new_user_xprism < user_xprism:
+            new_user_amps = (1 * 0.49992) * new_user_xprism
+        else:
+            new_user_amps = (1 * 0.49992) * new_user_xprism + user_amps
+
         new_user_weight = (new_user_yluna * new_user_amps) ** (1 / 2)
 
         new_total_amps = (1 * 0.49992) * (xprism_pledged + new_user_xprism) + total_amps
@@ -344,11 +359,13 @@ df = pd.DataFrame(records)
 st.subheader("Daily Rewards vs. Total APR")
 st.markdown(
     """
-    Starting with a wallet's current position in red, various combinations of yLUNA, xPRISM, and AMPS are used to calculate future daily PRISM rewards and total APR.
+    Starting with a wallet's current yLUNA position in white, various combinations of yLUNA, xPRISM, and AMPS are used to calculate future daily PRISM rewards and total APR.
 
     The new position value of yLUNA and xPRISM are color coded.  The more purple, the smaller the position value.
+
+    A user's total AMPS will reset if xPRISM is unpledged.
     
-    A user's may consider optimizing their position by earning the most daily PRISM rewards with the smallest position value.  Hover over the points to see the details.
+    A user may consider optimizing their position by earning the most daily PRISM rewards with the smallest position value.  Hover over the points to see the details.
     """
 )
 
@@ -372,16 +389,24 @@ chart = px.scatter(
     },
 )
 
+chart.add_trace(
+    go.Scatter(
+        x=df[df["new_user_yluna"] == user_yluna]["new_daily_rewards"].to_list(),
+        y=df[df["new_user_yluna"] == user_yluna]["new_total_apr"].to_list(),
+        mode="lines",
+        line=dict(color="white"),
+        hoverinfo="skip",
+        showlegend=False,
+    )
+)
+
 chart.add_annotation(
     x=current_daily_rewards,
     y=total_apr,
-    font=dict(color="red", size=15),
-    text="<b>Current</b>",
-    showarrow=True,
-    arrowhead=1,
-    arrowcolor="red",
-    arrowsize=1.5,
+    text="Current yLUNA Staked",
+    showarrow=False,
 )
+
 
 st.plotly_chart(chart, use_container_width=True)
 
