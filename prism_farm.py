@@ -1,9 +1,12 @@
 import base64
 import json
+from turtle import position
+import numpy as np
 import requests
 import streamlit as st
 import pandas as pd
 import plotly.express as px
+import plotly.graph_objects as go
 
 
 @st.cache(show_spinner=False)
@@ -23,8 +26,9 @@ def get_prices():
     luna_price = df.loc["LUNA", "price"]
     yluna_price = df.loc["yLUNA", "price"]
     prism_price = df.loc["PRISM", "price"]
+    xprism_price = df.loc["xPRISM", "price"]
 
-    return luna_price, yluna_price, prism_price
+    return luna_price, yluna_price, prism_price, xprism_price
 
 
 @st.cache(show_spinner=False)
@@ -168,7 +172,7 @@ def get_total_boost_weight():
 
 
 # initial parameters
-luna_price, yluna_price, prism_price = get_prices()
+luna_price, yluna_price, prism_price, xprism_price = get_prices()
 staked_luna = get_staked_luna()
 staking_yield = get_staking_yield(luna_price, staked_luna) * 100
 yluna_yield = (luna_price / yluna_price) * staking_yield
@@ -252,6 +256,7 @@ total_amps = total_boost_weight**2 / yluna_staked
 # user queries
 user_xprism, user_amps = get_user_amps(user_address)
 user_yluna, user_weight = get_user_prism_farm(user_address)
+current_position_size = (user_yluna * yluna_price) + (user_xprism * xprism_price)
 
 col3, col4, col5 = st.columns(3)
 
@@ -265,6 +270,7 @@ base_apr = (base_rewards * prism_price) / (user_yluna * yluna_price) * 100
 boost_rewards = 26_000_000 * user_weight / total_boost_weight
 boost_apr = (boost_rewards * prism_price) / (user_yluna * yluna_price) * 100
 total_apr = base_apr + boost_apr
+current_daily_rewards = (base_rewards + boost_rewards) * prism_price / 365
 
 col6, col7, col8 = st.columns(3)
 
@@ -273,11 +279,11 @@ col7.metric(label="Boost APR", value=f"{boost_apr:,.2f}%")
 col8.metric(label="Total APR", value=f"{total_apr:,.2f}%")
 
 # range of yluna values
-yluna_range = range(int(user_yluna * 0.1), int(user_yluna * 5), int(user_yluna * 0.05))
+yluna_range = range(int(user_yluna * 0.5), int(user_yluna * 5), int(user_yluna * 0.05))
 
 # range of xprism values
 xprism_range = range(
-    int(user_xprism * 0.1), int(user_xprism * 5), int(user_xprism * 0.05)
+    int(user_xprism * 0.5), int(user_xprism * 10), int(user_xprism * 0.05)
 )
 
 # new records after 1 day
@@ -285,12 +291,14 @@ records = []
 for new_user_yluna in yluna_range:
     for new_user_xprism in xprism_range:
 
+        position_size = new_user_yluna * yluna_price + (new_user_xprism * xprism_price)
+
         new_yluna_staked = yluna_staked + new_user_yluna - user_yluna
 
-        new_user_amps = 0.49992 * new_user_xprism + user_amps
+        new_user_amps = (1 * 0.49992) * new_user_xprism + user_amps
         new_user_weight = (new_user_yluna * new_user_amps) ** (1 / 2)
 
-        new_total_amps = 0.49992 * (xprism_pledged + new_user_xprism) + total_amps
+        new_total_amps = (1 * 0.49992) * (xprism_pledged + new_user_xprism) + total_amps
         new_total_weight = (new_yluna_staked * new_total_amps) ** (1 / 2)
 
         new_base_rewards = 104_000_000 * new_user_yluna / new_yluna_staked
@@ -304,13 +312,16 @@ for new_user_yluna in yluna_range:
         )
 
         new_total_apr = new_base_apr + new_boost_apr
-        new_total_rewards = (new_base_rewards + new_boost_rewards) / 365
+        new_daily_rewards = (new_base_rewards + new_boost_rewards) * prism_price / 365
 
         ratio = new_user_xprism / new_user_yluna
+
+        eff = (position_size**2 + new_daily_rewards**2) ** (1 / 2)
 
         # append all the data to the records list
         records.append(
             {
+                "position_size": position_size,
                 "new_user_yluna": new_user_yluna,
                 "new_user_xprism": new_user_xprism,
                 "new_yluna_staked": new_yluna_staked,
@@ -323,59 +334,58 @@ for new_user_yluna in yluna_range:
                 "new_boost_rewards": new_boost_rewards,
                 "new_boost_apr": new_boost_apr,
                 "new_total_apr": new_total_apr,
-                "new_total_rewards": new_total_rewards,
+                "new_daily_rewards": new_daily_rewards,
                 "ratio": ratio,
+                "eff": eff,
             }
         )
 
+# create a dataframe from the records list
 df = pd.DataFrame(records)
 
 # plot APRs
-st.subheader("Projected Rewards")
-st.write("User's daily PRISM rewards based on various yLUNA and xPRISM scenarios.")
+st.subheader("Daily Rewards vs. Total APR")
+st.markdown(
+    """
+    Starting with a wallet's current position in red, various combinations of yLUNA, xPRISM, and AMPS are used to calculate future daily PRISM rewards and total APR.
 
-chart = px.scatter_3d(
-    data_frame=df,
-    x="new_user_yluna",
-    y="new_user_xprism",
-    z="ratio",
-    color="new_total_rewards",
-    range_z=[0, 200],
-    labels={
-        "ratio": "Ratio",
-        "new_user_yluna": "yLUNA Amount",
-        "new_user_xprism": "xPRISM Amount",
-        "new_total_rewards": "Daily Rewards",
-    },
-    template="plotly_dark",
+    The new position value of yLUNA and xPRISM are color coded.  The more purple, the smaller the position value.
+    
+    A user's may consider optimizing their position by earning the most daily PRISM rewards with the smallest position value.  Hover over the points to see the details.
+    """
 )
 
-# show chart
-st.plotly_chart(chart, use_container_width=True)
-
-
-# plot APRs
-st.subheader("Projected APRs")
-st.write("User's projected APR based on various yLUNA and xPRISM scenarios.")
-
-chart = px.scatter_3d(
+chart = px.scatter(
     data_frame=df,
-    x="new_user_yluna",
-    y="new_user_xprism",
-    z="ratio",
-    color="new_total_apr",
-    range_z=[0, 200],
+    x="new_daily_rewards",
+    y="new_total_apr",
+    color="position_size",
+    # range_color=[50, 400],
+    # size="new_daily_rewards",
+    template="plotly_dark",
+    color_continuous_scale="Viridis",
+    hover_data=["new_user_yluna", "new_user_xprism", "ratio"],
     labels={
         "ratio": "Ratio",
-        "new_user_yluna": "yLUNA Amount",
-        "new_user_xprism": "xPRISM Amount",
-        "new_total_apr": "APR",
+        "position_size": "Pos. Value",
+        "new_total_apr": "Total APR",
+        "new_user_yluna": "yLUNA",
+        "new_user_xprism": "xPRISM",
+        "new_daily_rewards": "Daily PRISM Rewards",
     },
-    template="plotly_dark",
 )
 
+chart.add_annotation(
+    x=current_daily_rewards,
+    y=total_apr,
+    font=dict(color="red", size=15),
+    text="<b>Current</b>",
+    showarrow=True,
+    arrowhead=1,
+    arrowcolor="red",
+    arrowsize=1.5,
+)
 
-# show chart
 st.plotly_chart(chart, use_container_width=True)
 
 
