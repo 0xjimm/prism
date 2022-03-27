@@ -252,6 +252,7 @@ total_boost_weight = get_total_boost_weight()
 yluna_staked = get_yluna_staked()
 total_amps = total_boost_weight**2 / yluna_staked
 
+
 # user queries
 try:
     user_xprism, user_amps = get_user_amps(user_address)
@@ -285,11 +286,11 @@ col7.metric(label="Boost APR", value=f"{boost_apr:,.2f}%")
 col8.metric(label="Total APR", value=f"{total_apr:,.2f}%")
 
 # range of yluna values + original yluna value
-yluna_range = np.arange(user_yluna * 0.5, user_yluna * 5, user_yluna * 0.05).tolist()
+yluna_range = np.arange(user_yluna * 0.5, user_yluna * 5, user_yluna * 0.1).tolist()
 
 # range of xprism values + original xprism value
 xprism_range = np.arange(
-    user_xprism * 0.5, user_xprism * 10, user_xprism * 0.05
+    user_xprism * 0.5, user_xprism * 10, user_xprism * 0.1
 ).tolist()
 
 # append current position to ranges
@@ -298,62 +299,71 @@ xprism_range.append(user_xprism)
 
 # new records after 1 day
 records = []
+
 for new_user_yluna in yluna_range:
     for new_user_xprism in xprism_range:
+        for day in range(1, 15, 1):
 
-        position_size = new_user_yluna * yluna_price + (new_user_xprism * xprism_price)
+            position_size = new_user_yluna * yluna_price + (
+                new_user_xprism * xprism_price
+            )
 
-        new_yluna_staked = yluna_staked + new_user_yluna - user_yluna
+            new_yluna_staked = yluna_staked + new_user_yluna - user_yluna
 
-        # reset AMPS if xprism is unpledged
-        if new_user_xprism < user_xprism:
-            new_user_amps = (1 * 0.49992) * new_user_xprism
-        else:
-            new_user_amps = (1 * 0.49992) * new_user_xprism + user_amps
+            # reset AMPS if xprism is unpledged
+            if new_user_xprism < user_xprism:
+                new_user_amps = (day * 0.49992) * new_user_xprism
+            else:
+                new_user_amps = (day * 0.49992) * new_user_xprism + user_amps
 
-        new_user_weight = (new_user_yluna * new_user_amps) ** (1 / 2)
+            new_user_weight = (new_user_yluna * new_user_amps) ** (1 / 2)
 
-        new_total_amps = (1 * 0.49992) * (xprism_pledged + new_user_xprism) + total_amps
-        new_total_weight = (new_yluna_staked * new_total_amps) ** (1 / 2)
+            new_total_amps = (day * 0.49992) * (
+                xprism_pledged + new_user_xprism
+            ) + total_amps
+            new_total_weight = (new_yluna_staked * new_total_amps) ** (1 / 2)
 
-        new_base_rewards = 104_000_000 * new_user_yluna / new_yluna_staked
-        new_base_apr = (
-            (new_base_rewards * prism_price) / (new_user_yluna * yluna_price) * 100
-        )
+            new_base_rewards = 104_000_000 * new_user_yluna / new_yluna_staked
+            new_base_apr = (
+                (new_base_rewards * prism_price) / (new_user_yluna * yluna_price) * 100
+            )
 
-        new_boost_rewards = 26_000_000 * new_user_weight / new_total_weight
-        new_boost_apr = (
-            (new_boost_rewards * prism_price) / (new_user_yluna * yluna_price) * 100
-        )
+            new_boost_rewards = 26_000_000 * new_user_weight / new_total_weight
+            new_boost_apr = (
+                (new_boost_rewards * prism_price) / (new_user_yluna * yluna_price) * 100
+            )
 
-        new_total_apr = new_base_apr + new_boost_apr
-        new_daily_rewards = (new_base_rewards + new_boost_rewards) * prism_price / 365
+            new_total_apr = new_base_apr + new_boost_apr
+            new_daily_rewards = (
+                (new_base_rewards + new_boost_rewards) * prism_price / 365
+            )
 
-        ratio = new_user_xprism / new_user_yluna
+            ratio = new_user_xprism / new_user_yluna
 
-        eff = (position_size**2 + new_daily_rewards**2) ** (1 / 2)
+            eff = (position_size**2 + new_daily_rewards**2) ** (1 / 2)
 
-        # append all the data to the records list
-        records.append(
-            {
-                "position_size": position_size,
-                "new_user_yluna": new_user_yluna,
-                "new_user_xprism": new_user_xprism,
-                "new_yluna_staked": new_yluna_staked,
-                "new_user_amps": new_user_amps,
-                "new_user_weight": new_user_weight,
-                "new_total_amps": new_total_amps,
-                "new_total_weight": new_total_weight,
-                "new_base_rewards": new_base_rewards,
-                "new_base_apr": new_base_apr,
-                "new_boost_rewards": new_boost_rewards,
-                "new_boost_apr": new_boost_apr,
-                "new_total_apr": new_total_apr,
-                "new_daily_rewards": new_daily_rewards,
-                "ratio": ratio,
-                "eff": eff,
-            }
-        )
+            # append all the data to the records list
+            records.append(
+                {
+                    "day": day,
+                    "position_size": position_size,
+                    "new_user_yluna": new_user_yluna,
+                    "new_user_xprism": new_user_xprism,
+                    "new_yluna_staked": new_yluna_staked,
+                    "new_user_amps": new_user_amps,
+                    "new_user_weight": new_user_weight,
+                    "new_total_amps": new_total_amps,
+                    "new_total_weight": new_total_weight,
+                    "new_base_rewards": new_base_rewards,
+                    "new_base_apr": new_base_apr,
+                    "new_boost_rewards": new_boost_rewards,
+                    "new_boost_apr": new_boost_apr,
+                    "new_total_apr": new_total_apr,
+                    "new_daily_rewards": new_daily_rewards,
+                    "ratio": ratio,
+                    "eff": eff,
+                }
+            )
 
 # create a dataframe from the records list
 df = pd.DataFrame(records)
@@ -377,11 +387,13 @@ chart = px.scatter(
     x="new_daily_rewards",
     y="new_total_apr",
     color="position_size",
+    animation_frame="day",
+    animation_group="position_size",
     # range_color=[50, 400],
     # size="new_daily_rewards",
     template="plotly_dark",
     color_continuous_scale="Viridis",
-    hover_data=["new_user_yluna", "new_user_xprism", "ratio"],
+    hover_data=["new_user_yluna", "new_user_xprism", "ratio", "new_user_amps"],
     labels={
         "ratio": "Ratio",
         "position_size": "Pos. Value",
@@ -389,7 +401,9 @@ chart = px.scatter(
         "new_user_yluna": "yLUNA",
         "new_user_xprism": "xPRISM",
         "new_daily_rewards": "Daily PRISM Rewards",
+        "new_user_amps": "AMPS",
     },
+    range_y=[df["new_total_apr"].min() - 2.5, df["new_total_apr"].max() + 2.5],
 )
 
 chart.add_trace(
@@ -407,7 +421,7 @@ chart.add_annotation(
     x=current_daily_rewards,
     y=total_apr,
     text="Current yLUNA Staked",
-    showarrow=False,
+    showarrow=True,
 )
 
 
